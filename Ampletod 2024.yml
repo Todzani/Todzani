@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description:  This is tod ample project
+  
+Resources:
+  todvpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "192.168.0.0/16"
+      EnableDnsHostnames: false
+      EnableDnsSupport: false
+      Tags: 
+        - Key:  "Name"
+          Value:  "todvpc"
+
+  privatesubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "us-east-1a"
+      CidrBlock: "192.168.1.0/24"
+      Tags: 
+        - Key:  "Name"
+          Value:  "privatesubnet1"
+      VpcId:
+        Ref:  "todvpc"
+  
+  privatesubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "us-east-1b"
+      CidrBlock: "192.168.2.0/24"
+      Tags: 
+        - Key:  "Name"    
+          Value:  "privatesubnet2"
+      VpcId: 
+        Ref:  "todvpc"
+
+  todsubnetgroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: "This is tod rds" # Required
+      DBSubnetGroupName:  "todsubgroup"
+      SubnetIds: # Required
+        - !Ref  "privatesubnet1"
+        - !Ref  "privatesubnet2"
+      Tags:  
+        - Key:  "Name"
+          Value: "todsubgroup"
+
+  todsecuritygroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "this is tod security group" # Required
+      GroupName: "rdssg1"
+      SecurityGroupEgress: 
+      - CidrIp: 0.0.0.0/0
+        FromPort: 80
+        ToPort: 80
+        IpProtocol: TCP
+      SecurityGroupIngress: 
+      - CidrIp: 0.0.0.0/0
+        FromPort: 3306
+        ToPort: 3306
+        IpProtocol: TCP
+      Tags: 
+        - Key:  "Name"
+          Value:  "rdssg1"
+      VpcId: 
+        Ref:  "todvpc"
+
+  todrds:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: "20"
+      AllowMajorVersionUpgrade: false
+      BackupRetentionPeriod: 7
+      DBInstanceClass: "db.t2.micro"
+      DBInstanceIdentifier: "rdsDemoInstance"
+      DBName: "Ampledb"
+      Port: "3306"
+      Engine: "MySQL"
+      EngineVersion: "8.0.33"
+      MasterUserPassword: "Aws123456789"
+      MasterUsername: "awsuser"
+      PubliclyAccessible: false
+      DBSubnetGroupName: "todsubgroup"
+      Tags: 
+        - Key:  "Name"
+          Value:  "rdsDemoInstance"
+      VPCSecurityGroups: 
+        - Ref:  "todsecuritygroup"
